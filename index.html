@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Path Animation</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial
+        }
+
+        .wrap {
+            display: flex;
+            flex-direction: column;
+            height: 100%
+        }
+
+        header {
+            padding: 8px 12px;
+            background: #111;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(#f7f7f9, #eef2f6)
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        button,
+        input {
+            font-size: 14px;
+            padding: 6px
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            max-height: calc(100vh - 56px);
+            background: transparent
+        }
+
+        /* visual helpers */
+        #motionPath {
+            fill: none;
+            stroke: #666;
+            stroke-width: 4;
+            stroke-linecap: round
+        }
+
+        #guide {
+            fill: none;
+            stroke: #cbd5e1;
+            stroke-width: 2;
+            stroke-dasharray: 6 6
+        }
+
+        .marker {
+            font-size: 12px;
+            fill: #222
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <strong>Triangle along sketched path (0 → 15)</strong>
+            <div class="controls" style="margin-left:auto">
+                <label>Duration:
+                    <input id="duration" type="number" value="8000" min="500" step="250">ms
+                </label>
+                <label>Follow rotation:
+                    <input id="rotate" type="checkbox" checked>
+                </label>
+                <button id="play">Play</button>
+                <button id="pause">Pause</button>
+                <button id="restart">Restart</button>
+            </div>
+        </header>
+        <main>
+            <svg viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet">
+                <!-- Guide (lighter) -->
+                <path id="guide"
+                    d="M900,60 C780,140 680,100 640,200 C600,300 720,340 700,240 C680,160 620,140 600,200 C580,260 660,360 700,300 C740,240 680,200 620,300 C580,360 600,420 680,460 C760,500 420,520 200,500 C160,500 250,480 320,470 C380,460 520,470 680,480 C760,500 820,520 880,560" />
+
+                <!-- Main motion path approximating the sketch (0..15) -->
+                <path id="motionPath" d="M900,60
+             C780,140 680,100 640,200
+             C600,300 720,340 700,240
+             C680,160 620,140 600,200
+             C580,260 660,360 700,300
+             C740,240 680,200 620,300
+             C580,360 600,420 680,460
+             C760,500 420,520 200,500
+             C160,500 250,480 320,470
+             C380,460 520,470 680,480
+             C760,500 820,520 880,560" />
+
+                <!-- Triangle that will travel along the path. Defined around origin, we'll translate it to path point. -->
+                <g id="actor" transform="translate(0,0)">
+                    <polygon id="triangle" points="0,-10 18,0 0,10" fill="#ff6b6b" stroke="#b53f3f" stroke-width="1" />
+                </g>
+            </svg>
+        </main>
+    </div>
+
+    <script>
+        // Elements
+        const path = document.getElementById('motionPath');
+        const triangle = document.getElementById('triangle');
+        const actor = document.getElementById('actor');
+        const btnPlay = document.getElementById('play');
+        const btnPause = document.getElementById('pause');
+        const btnRestart = document.getElementById('restart');
+        const inputDuration = document.getElementById('duration');
+        const inputRotate = document.getElementById('rotate');
+
+        let pathLen = path.getTotalLength();
+        let startTime = null;
+        let rafId = null;
+        let paused = true;
+        let pauseAt = 0; // fraction 0..1
+
+        function placeAt(t) { // t in [0,1]
+            const len = Math.max(0, Math.min(1, t)) * pathLen;
+            const p = path.getPointAtLength(len);
+            // small delta forward to compute tangent
+            const ahead = Math.min(len + 1, pathLen);
+            const p2 = path.getPointAtLength(ahead);
+            const angle = Math.atan2(p2.y - p.y, p2.x - p.x) * 180 / Math.PI;
+            // apply transform to the group containing triangle
+            if (inputRotate.checked) actor.setAttribute('transform', `translate(${p.x},${p.y}) rotate(${angle})`);
+            else actor.setAttribute('transform', `translate(${p.x},${p.y})`);
+        }
+
+        function tick(ts) {
+            if (startTime === null) startTime = ts;
+            const dur = Math.max(50, parseFloat(inputDuration.value) || 8000);
+            const elapsed = ts - startTime;
+            let t = elapsed / dur + pauseAt;
+            if (t >= 1) { t = 1; placeAt(1); cancelAnimationFrame(rafId); rafId = null; paused = true; }
+            else { placeAt(t); rafId = requestAnimationFrame(tick); }
+        }
+
+        btnPlay.addEventListener('click', () => {
+            if (!paused) return;
+            paused = false;
+            startTime = null;
+            rafId = requestAnimationFrame(tick);
+        });
+        btnPause.addEventListener('click', () => {
+            if (paused) return;
+            paused = true;
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = null;
+            // compute pauseAt from current transform by projecting nearest length
+            // crude: find nearest length by sampling
+            const sampleSteps = 200;
+            let best = 0; let bestDist = Infinity;
+            const bbox = actor.getBBox();
+            const cx = bbox.x + bbox.width / 2;
+            const cy = bbox.y + bbox.height / 2;
+            for (let i = 0; i <= sampleSteps; i++) {
+                const s = i / sampleSteps;
+                const pt = path.getPointAtLength(s * pathLen);
+                const dx = pt.x - cx; const dy = pt.y - cy;
+                const d = dx * dx + dy * dy;
+                if (d < bestDist) { bestDist = d; best = s; }
+            }
+            pauseAt = best;
+        });
+        btnRestart.addEventListener('click', () => {
+            if (rafId) cancelAnimationFrame(rafId);
+            paused = false; pauseAt = 0; startTime = null; rafId = requestAnimationFrame(tick);
+        });
+
+        // place actor at start
+        placeAt(0);
+
+        // make SVG responsive to duration changes (if running, restart animation)
+        inputDuration.addEventListener('change', () => {
+            if (!paused) { if (rafId) cancelAnimationFrame(rafId); startTime = null; rafId = requestAnimationFrame(tick); }
+        });
+    </script>
+</body>
+
+</html>
