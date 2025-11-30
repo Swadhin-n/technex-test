@@ -9,22 +9,58 @@ type CountdownProps = {
 // This helper handles the design of the individual glass rectangles
 const TimeBox = ({ value, label }: { value: number; label: string }) => {
   return (
-    <div className="flex flex-col items-center justify-center 
-                    w-12 h-14 sm:w-14 sm:h-16 md:w-16 md:h-18 
-                    bg-white/4 backdrop-blur-sm 
-                    border border-white/12 rounded-lg 
-                    shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-1">
-      
-      {/* The Number - slightly smaller for compact layout */}
-      <span className="text-lg sm:text-xl md:text-2xl font-semibold text-white font-serif drop-shadow-sm">
-        {value < 10 ? `0${value}` : value}
-      </span>
-      
-      {/* The Label */}
-      <span className="text-[8px] sm:text-[9px] text-gray-300 uppercase tracking-widest mt-1 font-sans">
-        {label}
-      </span>
-    </div>
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        @keyframes gradient-shift {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.7; }
+        }
+        @keyframes glow {
+          0%, 100% { filter: drop-shadow(0 0 8px rgba(168,85,247,0.6)); }
+          50% { filter: drop-shadow(0 0 12px rgba(168,85,247,0.9)) drop-shadow(0 0 20px rgba(168,85,247,0.5)); }
+        }
+        .animate-shimmer {
+          animation: shimmer 3s infinite;
+        }
+        .animate-gradient-shift {
+          animation: gradient-shift 2s ease-in-out infinite;
+        }
+        .animate-glow {
+          animation: glow 2s ease-in-out infinite;
+        }
+      `}} />
+      <div className="flex flex-col items-center justify-center 
+                      w-12 h-14 sm:w-14 sm:h-16 md:w-16 md:h-18 
+                      bg-white/6 backdrop-blur-md
+                      border border-purple-400/30 rounded-lg 
+                      shadow-[0_0_15px_rgba(168,85,247,0.3)]
+                      animate-pulse
+                      relative overflow-hidden p-1">
+        
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-pink-500/10 to-blue-500/20 
+                        animate-gradient-shift" />
+        
+        {/* Shimmer effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent
+                        -translate-x-full animate-shimmer" />
+        
+        {/* The Number */}
+        <span className="relative z-10 text-lg sm:text-xl md:text-2xl font-semibold text-white 
+                         animate-glow">
+          {value < 10 ? `0${value}` : value}
+        </span>
+        
+        {/* The Label */}
+        <span className="relative z-10 text-[8px] sm:text-[9px] text-purple-200 uppercase tracking-widest mt-1">
+          {label}
+        </span>
+      </div>
+    </>
   );
 };
 

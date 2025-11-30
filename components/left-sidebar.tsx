@@ -17,13 +17,14 @@ const HugeiconsIcon: React.FC<{
   size?: number;
   className?: string;
 }> = ({ icon: Icon, size = 24, className }) => {
-  return <Icon size={size} className={className} />;
+  const IconComponent = Icon as any;
+  return <IconComponent size={size} className={className} />;
 };
 
 type NavItem = {
   name: string;
   href: string;
-  icon: React.ElementType | React.ReactNode;
+  icon: React.ElementType;
 };
 
 const navItems: NavItem[] = [
@@ -42,17 +43,8 @@ export default function LeftSidebar() {
   };
 
   const renderIcon = (icon: NavItem["icon"], props: Record<string, any> = {}) => {
-    if (React.isValidElement(icon)) return icon;
-
-    const isRenderableComponent =
-      typeof icon === "function" || (typeof icon === "object" && icon !== null && "render" in icon);
-
-    if (isRenderableComponent) {
-      const C = icon as React.ElementType;
-      return <C {...props} />;
-    }
-
-    return icon as any;
+    const Icon = icon as any;
+    return <Icon {...props} />;
   };
 
   return (
@@ -79,19 +71,19 @@ export default function LeftSidebar() {
                   className="group flex flex-col items-center relative"
                 >
                   <div
-                    className={`p-2.5 rounded-lg transition-all ${
+                    className={`p-2.5 rounded-lg transition-all duration-300 ease-out ${
                       active
                         ? "bg-purple-600/60 border border-purple-400/60 scale-110"
-                        : "bg-white/10 border border-white/10 hover:bg-purple-600/40 hover:border-purple-400/40"
+                        : "bg-white/10 border border-white/10 hover:bg-purple-600/40 hover:border-purple-400/40 hover:scale-105"
                     }`}
                   >
                     {renderIcon(item.icon, {
-                      className: `w-6 h-6 ${
-                        active ? "text-white" : "text-purple-300"
+                      className: `w-6 h-6 transition-colors duration-300 ${
+                        active ? "text-white" : "text-purple-300 group-hover:text-white"
                       }`,
                     })}
                   </div>
-                  <span className="relative left-full transform translate-x-[-100%] mb-1 hidden group-hover:block bg-transparent text-white text-xs rounded px-2 py-1">
+                  <span className="absolute top-full mt-2 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none text-white text-xs transition-opacity duration-300 ease-out">
                     {item.name}
                   </span>
                 </Link>
@@ -102,7 +94,7 @@ export default function LeftSidebar() {
       </aside>
 
       {/* MOBILE — FIXED BOTTOM NAVBAR */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full h-16 z-50 bg-purple-600/10 backdrop-blur-md border-t border-white/10 flex items-center justify-around px-4">
+      <nav className="md:hidden fixed bottom-5 left-0 w-full h-16 z-50 bg-purple-600/10 backdrop-blur-md border-t border-white/10 flex items-center justify-around px-4">
         {navItems.map((item) => {
           const active = pathname === item.href;
           return (
@@ -112,20 +104,20 @@ export default function LeftSidebar() {
               className="flex flex-col items-center gap-1"
             >
               <div
-                className={`p-2 rounded-md transition-all ${
+                className={`p-2 rounded-md transition-all duration-300 ease-out ${
                   active
                     ? "bg-purple-600/60 border border-purple-400/60 scale-110"
-                    : "bg-white/5 border border-white/10"
+                    : "bg-white/5 border border-white/10 active:scale-95"
                 }`}
               >
                 {renderIcon(item.icon, {
-                  className: `w-5 h-5 ${
+                  className: `w-5 h-5 transition-colors duration-300 ${
                     active ? "text-white" : "text-purple-300"
                   }`,
                 })}
               </div>
               <span
-                className={`text-[8px] ${
+                className={`text-[8px] transition-colors duration-300 ${
                   active ? "text-purple-300" : "text-gray-400"
                 }`}
               >

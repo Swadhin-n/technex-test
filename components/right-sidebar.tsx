@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { name: "Facebook", href: "https://www.facebook.com/stvincentngp/", icon: Facebook01Icon },
   { name: "YouTube", href: "https://youtu.be/bCcJIvfuiRc?si=bYSNiLfIxK33WN9e", icon: YoutubeIcon },
   { name: "LinkedIn", href: "https://www.linkedin.com/school/svpcet/posts/?feedView=all", icon: Linkedin01Icon },
-  { name: "X", href: "https://www.linkedin.com/school/svpcet/posts/?feedView=all", icon: NewTwitterRectangleIcon },
+  { name: "X", href: "https://x.com/techpallottines", icon: NewTwitterRectangleIcon },
 ];
 
 export default function RightSidebar() {
@@ -58,23 +58,23 @@ export default function RightSidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="group flex flex-col items-center"
+                  className="group flex flex-col items-center relative"
                 >
                   <div
-                    className={`p-2.5 rounded-lg transition-all ${
+                    className={`p-2.5 rounded-lg transition-all duration-300 ease-out ${
                       active
                         ? "bg-purple-600/60 border border-purple-400/60 scale-110"
-                        : "bg-white/10 border border-white/10 hover:bg-purple-600/40 hover:border-purple-400/40"
+                        : "bg-white/10 border border-white/10 hover:bg-purple-600/40 hover:border-purple-400/40 hover:scale-105"
                     }`}
                   >
                     <IconComponent
                       size={24}
-                      className={`${
-                        active ? "text-white" : "text-purple-300"
+                      className={`transition-colors duration-300 ${
+                        active ? "text-white" : "text-purple-300 group-hover:text-white"
                       }`}
                     />
                   </div>
-                  <span className="relative left-full transform translate-x-[-100%] mb-1 hidden group-hover:block bg-transparent text-white text-xs rounded px-2 py-1">
+                  <span className="absolute top-full mt-2 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none text-white text-xs transition-opacity duration-300 ease-out">
                     {item.name}
                   </span>
                 </Link>
